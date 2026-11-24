@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "id": "BN_zincblende_v100",
+  "geometry": "geometry.xyz",
+  "family": "BN_zincblende",
+  "volume_ratio": 1.0,
+  "method": "PAW",
+  "xc": "PBE",
+  "periodic": [
+    true,
+    true,
+    true
+  ],
+  "charge_e": 0,
+  "spin_polarized": false,
+  "spin_orbit": false,
+  "plane_wave_cutoff_eV": 600.0,
+  "kpoints": {
+    "mesh": [
+      4,
+      4,
+      4
+    ],
+    "centering": "gamma"
+  },
+  "occupations": {
+    "method": "fermi-dirac",
+    "width_eV": 0.05
+  },
+  "convergence": {
+    "energy_change_eV_per_cell": 1e-07,
+    "maximum_scf_iterations": 200
+  },
+  "symmetry": false
+}
