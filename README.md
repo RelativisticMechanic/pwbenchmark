@@ -129,6 +129,44 @@ For example, the following **input excerpt** specifies the common basis and occu
 
 Use the same geometry, exchange–correlation functional, occupation convention, and numerical settings. Reference results were generated with **VASP 5.4.4**. The finite-temperature electronic free energy is the energy quantity recorded by this release.
 
-**Absolute energies depend on the ionic datasets and their energy-zero conventions.** Matching physical settings alone does not guarantee matching absolute energies across different PAW implementations or valence spaces. For cross-code studies, volume-relative energies within a material family can reduce arbitrary energy offsets, but differences between ionic datasets still matter. Plane-wave counts refer to the explicit k-point ordering supplied in each output.
+**Do not compare absolute total energies directly across different PAW datasets.** Even with the same PBE functional, different datasets can introduce different energy zeros and valence spaces. Instead, compare the change in electronic free energy within each material family, using its `v100` case as the anchor.
+
+For code or implementation $c$, define the relative free energy per atom at volume ratio $r$ as
+
+$$
+\Delta f_c(r) = \frac{F_c(rV_0) - F_c(V_0)}{N},
+\qquad r \in \{0.94,\,1.06\}.
+$$
+
+Here, $F_c$ is the **total-cell electronic free energy** at the specified Fermi–Dirac occupation width, $V_0$ is the chosen `v100` cell volume, and $N$ is the number of atoms in the cell. $V_0$ is a test reference volume, not necessarily an equilibrium volume. Read the VASP reference values from `free_energy_eV` in each case's `out.json` and use the same energy quantity for the candidate implementation.
+
+Explicitly, $F_c(V)$ is the electronic free energy of the **entire simulation cell** calculated by code $c$ at cell volume $V$:
+
+$$
+F_c(V) = E_c(V) - T_{\mathrm{el}} S_{\mathrm{el},c}(V).
+$$
+
+Here, $E_c(V)$ is the DFT total energy, including the ion–ion contribution; $S_{\mathrm{el},c}(V)$ is the entropy associated with the electronic occupations; and $T_{\mathrm{el}}$ is the electronic temperature. The Fermi–Dirac width in this suite specifies $k_B T_{\mathrm{el}} = 0.05\ \mathrm{eV}$. This is an electronic smearing temperature, not an ionic temperature or a vibrational free-energy contribution.
+
+In the released data, $F_{\mathrm{VASP}}(V)$ is `out.json["free_energy_eV"]`, in **eV per cell**. Use the candidate code's corresponding finite-temperature free energy, rather than an energy with the entropy term omitted or a zero-temperature extrapolated energy. The division by $N$ in $\Delta f_c(r)$ converts the cell-energy difference to **eV per atom**.
+
+The cross-code error is the difference between these independently anchored energy changes:
+
+$$
+\varepsilon_c(r) = \left|\Delta f_c(r) - \Delta f_{\mathrm{VASP}}(r)\right|.
+$$
+
+For example, compare `Si_diamond_v094` with `Si_diamond_v100` **within each code first**, then compare the two resulting differences. Repeat with `Si_diamond_v106` and the same `v100` anchor. All three calculations within a code must retain the same composition, charge, ionic datasets, functional, occupation width, and numerical settings apart from the prescribed geometry change.
+
+The original GPAW–VASP cross-code check used
+
+$$
+\varepsilon_c(r) \leq 0.020\ \mathrm{eV/atom}
+= 20\ \mathrm{meV/atom}.
+$$
+
+This gives **32 nontrivial energy-difference checks** across 16 families. The 16 `v100` cases supply anchors and are not independent passing tests. The tolerance is a cross-PAW consistency threshold, not a claim of chemical accuracy.
+
+**What cancels:** a volume-independent reference-energy offset for a fixed composition. **What remains:** differences in the potentials' response to volume, numerical convergence errors, and other implementation or model differences. Agreement in relative energies does not establish equivalence of the PAW datasets. Absolute-energy comparisons require compatible ionic datasets and matching energy conventions. Plane-wave counts refer to the explicit k-point ordering supplied in each output.
 
 The public files contain no runtime measurements, SCF iteration counts, performance-comparison tables, or per-case provenance blocks. They retain numerical results and input/geometry checksums. Licensed VASP source code, executables, and potential files are not included.
